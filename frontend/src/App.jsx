@@ -24,9 +24,11 @@ export default function App() {
   const [showAll, setShowAll]       = useState(false);
   const [filterStatus, setFilterStatus] = useState('todos');
 
-  const andar      = selPdf
-    ? selPdf.split('/').pop().replace(/\.pdf$/i, '')
-    : '';
+  // const andar      = selPdf
+  //   ? selPdf.split('/').pop().replace(/\.pdf$/i, '')
+  //   : '';
+  const andar = PDFS.find(p => p.url === selPdf)?.nome ?? '';
+
   const commentMap = useSubscribers(andar);
   const boxes      = useCoords(selPdf);
   const ramais     = useRamais();

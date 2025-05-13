@@ -13,18 +13,6 @@ from pathlib import Path
 app = FastAPI()
 app.mount("/pabx", StaticFiles(directory="static/pabx"), name="pabx")
 
-# ––– CORS para o Vite ––––––––––––––––––––––––––––––––––
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://10.65.225.104:5173",
-        "http://10.65.225.104",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # ––– agendador em background ––––––––––––––––––––––––––
 sched = BackgroundScheduler()
@@ -136,3 +124,10 @@ async def coords(pdf: UploadFile):
 
     doc.close()
     return rows
+
+# NOVO: serve a aplicação React (build de produção)
+app.mount(
+    "/",                                   # raiz do site
+    StaticFiles(directory="static/front/dist", html=True),
+    name="frontend"
+)

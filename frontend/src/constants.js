@@ -5,7 +5,8 @@ export const ZOOM_MAX  = 3;
 
 /* PDFs disponíveis */
 export const PDFS = Object.entries(
-  import.meta.glob('/src/assets/andares/*.pdf', {
+
+    import.meta.glob('/src/assets/andares/*.pdf', {
     eager:  true,
     import: 'default',
     query:  '?url',
