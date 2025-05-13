@@ -14,7 +14,7 @@ def get_login_token() -> str:
     headers = {
         "Host": "172.16.153.10",
         "sec-ch-ua-platform": "\"Windows\"",
-        "Authorization": "Basic bXRjbDpWU1RlbCEyMDIzQCE=",
+        "Authorization": BASIC_AUTH,
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
         "Accept": "application/json",
         "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
