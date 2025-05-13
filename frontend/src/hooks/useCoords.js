@@ -1,5 +1,6 @@
 // src/hooks/useCoords.js
 import { useEffect, useState } from 'react';
+import { PDFS } from '../constants';          // ← já contém { nome, url }
 
 export default function useCoords(pdfUrl) {
   const [boxes, setBoxes] = useState([]);
@@ -7,27 +8,22 @@ export default function useCoords(pdfUrl) {
   useEffect(() => {
     if (!pdfUrl) { setBoxes([]); return; }
 
+    // pelo url selecionado descobre o nome “andar-01”
+    const nome = PDFS.find(p => p.url === pdfUrl)?.nome;
+    if (!nome) { setBoxes([]); return; }
+
+    const jsonUrl = `/coords/${nome}.json?ts=${Date.now()}`; // cache-buster opcional
+
     (async () => {
       try {
-        /* baixa o PDF que já foi renderizado */
-        const blob = await fetch(pdfUrl).then(r => {
-          if (!r.ok) throw new Error(`GET ${pdfUrl} → ${r.status}`);
-          return r.blob();
-        });
-
-        /* manda ao backend */
-        const fd = new FormData();
-        fd.append('pdf', new File([blob], 'tmp.pdf', { type: 'application/pdf' }));
-
-        const resp = await fetch('/coords', { method: 'POST', body: fd });
+        const resp = await fetch(jsonUrl);
         if (!resp.ok) {
-          console.error('/coords', resp.status, await resp.text());
+          console.error('GET', jsonUrl, resp.status);
           setBoxes([]);
           return;
         }
         const raw = await resp.json();
 
-        /* normaliza texto: “01”-“09” → “1”-“9” (mas NÃO descarta 1-9) */
         const clean = raw.map(c => ({
           ...c,
           texto: c.texto.replace(/^0([1-9])$/, '$1'),

@@ -30,6 +30,8 @@ Thumbs.db
 /frontend/dist/
 /backend/static/front/dist
 
+
+
 # Arquivos de lock não ignorados (mantêm versões travadas)
 # package-lock.json  ← deixar versionado
 # requirements.txt  ← deixar versionado

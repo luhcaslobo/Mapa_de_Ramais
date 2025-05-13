@@ -1,49 +1,43 @@
-from fastapi import FastAPI, UploadFile, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+# server.py  — versão enxuta servindo JSON pré-gerado
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from apscheduler.schedulers.background import BackgroundScheduler
 from pydantic import BaseModel
-import fitz  # PyMuPDF
-import update_subscriber_json       # ← deve ter def main()
-import asyncio
-import listout_report
-import json
+import update_subscriber_json
+import asyncio, listout_report, json
 from pathlib import Path
 
 app = FastAPI()
+
+# arquivos JSON do PABX
 app.mount("/pabx", StaticFiles(directory="static/pabx"), name="pabx")
 
+# JSONs de coordenadas pré-gerados por build_coords.py
+app.mount("/coords", StaticFiles(directory="static/coords"), name="coords")
 
-# ––– agendador em background ––––––––––––––––––––––––––
+# ---------------------------------------------------------------------- #
+#  agendadores                                                            #
 sched = BackgroundScheduler()
 
 @app.on_event("startup")
-def _start_scheduler() -> None:
-    # executa imediatamente e depois a cada 60 s
-    sched.add_job(
-        update_subscriber_json.main,
-        "interval",
-        minutes=1,
-        id="update_json",
-        replace_existing=True
-    )
+def _start_scheduler():
+    sched.add_job(update_subscriber_json.main, "interval",
+                  minutes=1, id="update_json", replace_existing=True)
     sched.start()
 
 @app.on_event("shutdown")
-def _stop_scheduler() -> None:
+def _stop_scheduler():
     sched.shutdown()
 
-# ---------- tarefa Telnet listout_report ---------------------------------
-_telnet_task: asyncio.Task | None = None   # guarda a task para cancelar
+_telnet_task: asyncio.Task | None = None
 
 @app.on_event("startup")
-async def _start_telnet_cycle() -> None:
+async def _start_telnet_cycle():
     global _telnet_task
-    loop = asyncio.get_running_loop()
-    _telnet_task = loop.create_task(listout_report.main())  # roda para sempre
+    _telnet_task = asyncio.create_task(listout_report.main())
 
 @app.on_event("shutdown")
-async def _stop_telnet_cycle() -> None:
+async def _stop_telnet_cycle():
     if _telnet_task:
         _telnet_task.cancel()
         try:
@@ -51,7 +45,8 @@ async def _stop_telnet_cycle() -> None:
         except asyncio.CancelledError:
             pass
 
-# ––– persistência de anotações –––
+# ---------------------------------------------------------------------- #
+#  anotações                                                             #
 ANNOTATIONS_FILE = Path("annotations.json")
 
 class Annotation(BaseModel):
@@ -60,74 +55,23 @@ class Annotation(BaseModel):
 
 @app.get("/api/annotations")
 def get_annotations():
-    if ANNOTATIONS_FILE.exists():
-        try:
-            data = json.loads(ANNOTATIONS_FILE.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
-            data = {}
-    else:
-        data = {}
-    return data
+    try:
+        return json.loads(ANNOTATIONS_FILE.read_text("utf-8"))
+    except Exception:
+        return {}
 
 @app.post("/api/annotations")
 def add_annotation(item: Annotation):
-    # validação
-    dn = item.directoryNumber
-    text = item.text
-    # carrega existente
-    if ANNOTATIONS_FILE.exists():
-        try:
-            annotations = json.loads(ANNOTATIONS_FILE.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
-            annotations = {}
-    else:
-        annotations = {}
-    # atualiza
-    annotations[str(dn)] = text
-    # salva no arquivo
-    ANNOTATIONS_FILE.write_text(json.dumps(annotations, ensure_ascii=False, indent=2), encoding="utf-8")
+    try:
+        data = json.loads(ANNOTATIONS_FILE.read_text("utf-8"))
+    except Exception:
+        data = {}
+    data[item.directoryNumber] = item.text
+    ANNOTATIONS_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2),
+                                encoding="utf-8")
     return {"ok": True}
 
-# ––– lógica original /coords ––––––––––––––––––––––––––
-LAYER_CANDIDATAS = ["ARQ-NUM", "ARK-NUM"]
-
-@app.post("/coords")
-async def coords(pdf: UploadFile):
-    if pdf.content_type != "application/pdf":
-        raise HTTPException(400, "Arquivo precisa ser PDF")
-
-    data = await pdf.read()
-    doc = fitz.open(stream=data, filetype="pdf")
-
-    ocgs = doc.get_ocgs()
-    layer_xref = next(
-        (x for nome in LAYER_CANDIDATAS
-           for x, v in ocgs.items() if v["name"] == nome),
-        None,
-    )
-    if not layer_xref:
-        doc.close()
-        raise HTTPException(404, "Nenhuma das layers ARQ‑NUM / ARK‑NUM encontrada")
-
-    off = [x for x in ocgs if x != layer_xref]
-    doc.set_layer(-1, on=[layer_xref], off=off)
-
-    rows = []
-    for pg in range(doc.page_count):
-        for x0, y0, x1, y1, texto, bloco, linha, ordem in doc[pg].get_text("words"):
-            rows.append({
-                "page":  pg + 1,
-                "x0": x0, "y0": y0, "x1": x1, "y1": y1,
-                "texto": texto.strip(),
-                "bloco": int(bloco), "linha": int(linha), "ordem": int(ordem),
-            })
-
-    doc.close()
-    return rows
-
-# NOVO: serve a aplicação React (build de produção)
-app.mount(
-    "/",                                   # raiz do site
-    StaticFiles(directory="static/front/dist", html=True),
-    name="frontend"
-)
+# ---------------------------------------------------------------------- #
+#  frontend build                                                        #
+app.mount("/", StaticFiles(directory="static/front/dist", html=True),
+          name="frontend")
