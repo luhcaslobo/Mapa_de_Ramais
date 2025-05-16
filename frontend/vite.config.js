@@ -10,14 +10,14 @@ export default defineConfig({
   ],
   
 // RETIRAR DO COMENTÁRIO PARA AMBIENTE DEV 
-  // server: {
-  //   host: '0.0.0.0',          // acessível na rede
-  //   proxy: {
-  //     '/coords': 'http://localhost:8000', // encaminha para FastAPI
-  //     '/pabx': 'http://localhost:8000',
-  //     '/api/annotations': 'http://localhost:8000',
-  //   },
+  server: {
+    host: '0.0.0.0',          // acessível na rede
+    proxy: {
+      '/coords': 'http://localhost:8000', // encaminha para FastAPI
+      '/pabx': 'http://localhost:8000',
+      '/api/annotations': 'http://localhost:8000',
+    },
     
-  // },
+  },
 
 })
