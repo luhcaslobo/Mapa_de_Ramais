@@ -61,22 +61,21 @@ async def telnet_cycle():
 
     JSON_FILE.write_text(json.dumps(registros, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    # Atualiza histórico de ramais que voltaram online
+    # Atualiza histórico de ramais que ficaram offline
     try:
         historico = json.loads(HISTORICO_FILE.read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
         historico = {}
 
-    # Verifica ramais que estavam offline e não estão mais na lista atual
-    ramais_anteriores = set()
+    # Para cada ramal na lista atual de offline
     for registro in registros:
-        ramais_anteriores.add(registro["dir nb"])
-
-    for ramal in ramais_anteriores - dir_nbs:  # Ramais que voltaram online
+        ramal = registro["dir nb"]
         if ramal not in historico:
             historico[ramal] = []
-        historico[ramal].insert(0, agora)
-        historico[ramal] = historico[ramal][:10]  # Mantém apenas os 10 últimos registros
+        # Adiciona novo registro apenas se for diferente do último
+        if not historico[ramal] or historico[ramal][0] != agora:
+            historico[ramal].insert(0, agora)
+            historico[ramal] = historico[ramal][:10]  # Mantém apenas os 10 últimos registros
 
     # Salva o histórico atualizado
     HISTORICO_FILE.write_text(

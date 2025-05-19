@@ -106,7 +106,7 @@ export default function App() {
       {/* Mobile sidebar toggle */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="md:hidden fixed top-2 left-2 z-50 bg-blue-900 text-white p-2 rounded-full shadow-lg"
+        className="md:hidden fixed top-2 left-2 z-20 bg-blue-900 text-white p-2 rounded-full shadow-lg"
         aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
       >
         {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
@@ -117,7 +117,7 @@ export default function App() {
         className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
                    md:translate-x-0 transition-transform duration-300 ease-in-out
                    w-full md:w-1/4 lg:w-1/5 h-full p-2 border-r overflow-auto
-                   fixed md:relative z-40 bg-white md:bg-transparent`}
+                   fixed md:relative z-10 bg-white md:bg-transparent`}
       >
         <h1 className="text-white font-bold text-center uppercase text-sm rounded-t-lg bg-blue-900 border-gray-300 py-1">
           Mapa de ramais

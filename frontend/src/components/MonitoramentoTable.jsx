@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import subscribers from "/src/assets/pabx/subscribers.json"
 import useMobile from "../hooks/useMobile"
 
@@ -21,6 +22,23 @@ export default function MonitoramentoTable({ data, ramais, onSelect }) {
   const [showHistorico, setShowHistorico] = useState(false)
   const [selectedDn, setSelectedDn] = useState(null)
   const isMobile = useMobile()
+  const [portalContainer, setPortalContainer] = useState(null)
+
+  useEffect(() => {
+    // Criar elemento para o portal
+    const el = document.createElement('div')
+    el.style.position = 'fixed'
+    el.style.left = '0'
+    el.style.top = '0'
+    el.style.width = '100%'
+    el.style.height = '100%'
+    el.style.pointerEvents = 'none' // Mantém none aqui
+    el.style.zIndex = '1000'
+    document.body.appendChild(el)
+    setPortalContainer(el)
+
+    return () => document.body.removeChild(el)
+  }, [])
 
   useEffect(() => {
     fetch("/api/annotations")
@@ -39,6 +57,17 @@ export default function MonitoramentoTable({ data, ramais, onSelect }) {
     document.addEventListener("click", handleClickOutside)
     return () => document.removeEventListener("click", handleClickOutside)
   }, [menu.visible])
+
+  // Adicionar event listener para a tecla Esc
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') {
+        setShowHistorico(false)
+      }
+    }
+    window.addEventListener('keydown', handleEsc)
+    return () => window.removeEventListener('keydown', handleEsc)
+  }, [])
 
   const fetchHistorico = async (dn) => {
     try {
@@ -62,6 +91,12 @@ export default function MonitoramentoTable({ data, ramais, onSelect }) {
     } catch (err) {
       console.error("Erro ao carregar histórico:", err)
       alert("Erro ao carregar histórico. Por favor, tente novamente.")
+    }
+  }
+
+  const handleCloseHistorico = (e) => {
+    if (e.target === e.currentTarget) {
+      setShowHistorico(false)
     }
   }
 
@@ -152,10 +187,32 @@ export default function MonitoramentoTable({ data, ramais, onSelect }) {
         })}
       </div>
 
-      {showHistorico && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded-lg w-96 max-w-[90%]">
-            <h2 className="text-lg font-bold mb-4">Histórico do Ramal {selectedDn}</h2>
+      {showHistorico && portalContainer && createPortal(
+        <div 
+          className="fixed inset-0 flex items-center justify-center"
+          style={{ 
+            zIndex: 1001,
+            pointerEvents: 'auto' // Habilita interações aqui
+          }}
+          onClick={handleCloseHistorico}
+        >
+          <div className="fixed inset-0 bg-black bg-opacity-50" />
+          <div 
+            className="bg-white p-4 rounded-lg w-96 max-w-[90%] relative z-[1002]" 
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold">Histórico do Ramal {selectedDn}</h2>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowHistorico(false)
+                }}
+                className="text-gray-500 hover:text-gray-700 text-xl font-bold px-2 py-1"
+              >
+                ×
+              </button>
+            </div>
             <div className="max-h-64 overflow-auto">
               {historico.map((data, index) => (
                 <div key={index} className="mb-2 p-2 bg-gray-100 rounded">
@@ -166,23 +223,32 @@ export default function MonitoramentoTable({ data, ramais, onSelect }) {
                 <p className="text-gray-500">Nenhum registro encontrado</p>
               )}
             </div>
-            <button
-              onClick={() => setShowHistorico(false)}
-              className="mt-4 px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-600"
-            >
-              Fechar
-            </button>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowHistorico(false)
+                }}
+                className="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-600"
+              >
+                Fechar
+              </button>
+            </div>
           </div>
-        </div>
+        </div>,
+        portalContainer
       )}
 
-      {menu.visible && (
+      {menu.visible && portalContainer && createPortal(
         <div
-          className="fixed bg-white border shadow p-2 z-50 rounded"
+          className="fixed bg-white border shadow-lg p-2 rounded"
           style={{
+            position: 'fixed',
             top: menu.y,
             left: menu.x,
             maxWidth: isMobile ? "80vw" : "auto",
+            zIndex: 1001,
+            pointerEvents: 'auto' // Habilita interações aqui
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -238,7 +304,8 @@ export default function MonitoramentoTable({ data, ramais, onSelect }) {
               </button>
             </div>
           )}
-        </div>
+        </div>,
+        portalContainer
       )}
     </div>
   )
