@@ -2,6 +2,8 @@ import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import subscribers from "/src/assets/pabx/subscribers.json"
 import useMobile from "../hooks/useMobile"
+// Adicione o import do ícone
+import { MoreVertical } from "lucide-react"
 
 // formata horário para dd/mm/yy hh:mm
 function formatHorario(timestamp) {
@@ -151,7 +153,7 @@ export default function MonitoramentoTable({ data, ramais, onSelect }) {
           return (
             <div
               key={dn}
-              className="p-2 border rounded shadow-sm cursor-pointer hover:bg-gray-300 whitespace-normal"
+              className="p-2 border rounded shadow-sm cursor-pointer hover:bg-gray-300 whitespace-normal relative group"
               title={annotations[dn] || "Sem anotações"}
               onClick={(e) => {
                 e.stopPropagation()
@@ -175,6 +177,24 @@ export default function MonitoramentoTable({ data, ramais, onSelect }) {
                   : undefined
               }
             >
+              {/* Adiciona o botão de edição */}
+              <button
+                className="absolute right-2 top-2 p-1 rounded-full hover:bg-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setTempText(annotations[dn] || "")
+                  setMenu({ 
+                    visible: true, 
+                    x: e.clientX, 
+                    y: e.clientY, 
+                    dn, 
+                    editing: false 
+                  })
+                }}
+              >
+                <MoreVertical size={16} />
+              </button>
+
               <div className="font-semibold">
                 Ramal: {dn} - {nomeByRamal.get(String(dn)) || "—"}
               </div>
@@ -196,7 +216,7 @@ export default function MonitoramentoTable({ data, ramais, onSelect }) {
           }}
           onClick={handleCloseHistorico}
         >
-          <div className="fixed inset-0 bg-black bg-opacity-50" />
+          <div className="fixed inset-0 bg-black opacity-50" /> {/* Modificado aqui */}
           <div 
             className="bg-white p-4 rounded-lg w-96 max-w-[90%] relative z-[1002]" 
             onClick={e => e.stopPropagation()}
