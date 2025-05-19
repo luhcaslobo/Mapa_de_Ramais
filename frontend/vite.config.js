@@ -9,15 +9,21 @@ export default defineConfig({
     tailwindcss()
   ],
   
-// RETIRAR DO COMENTÁRIO PARA AMBIENTE DEV 
   server: {
     host: '0.0.0.0',          // acessível na rede
     proxy: {
-      '/coords': 'http://localhost:8000', // encaminha para FastAPI
-      '/pabx': 'http://localhost:8000',
-      '/api/annotations': 'http://localhost:8000',
-    },
-    
-  },
-
+      '/coords': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
+      },
+      '/pabx': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
+      },
+      '/api': {              // Captura todas as rotas /api/*
+        target: 'http://localhost:8000',
+        changeOrigin: true
+      }
+    }
+  }
 })

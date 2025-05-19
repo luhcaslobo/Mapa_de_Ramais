@@ -154,7 +154,7 @@ export default function App() {
             </div>
           )}
         </div>
-        <div className="mt-6">
+        <div className="mt-2">
           <MonitoramentoTable data={mon} ramais={ramais} onSelect={handleRamalSelect} />
         </div>
       </aside>

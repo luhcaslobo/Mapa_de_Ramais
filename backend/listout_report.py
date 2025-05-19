@@ -14,6 +14,8 @@ BASE = Path(__file__).resolve().parent.parent          # <projeto>/..
 JSON_FILE = BASE / "backend" / "static" / "pabx" / "monitoramento.json"
 JSON_FILE.parent.mkdir(parents=True, exist_ok=True)    # garante pastas
 
+HISTORICO_FILE = BASE / "backend" / "static" / "pabx" / "historico_ramais.json"
+
 HOST      = "172.16.153.10"
 PORT      = 23
 USER      = os.getenv("USER_PABX")
@@ -58,6 +60,29 @@ async def telnet_cycle():
         registros.append({"dir nb": dn, "horário": agora})
 
     JSON_FILE.write_text(json.dumps(registros, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    # Atualiza histórico de ramais que voltaram online
+    try:
+        historico = json.loads(HISTORICO_FILE.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        historico = {}
+
+    # Verifica ramais que estavam offline e não estão mais na lista atual
+    ramais_anteriores = set()
+    for registro in registros:
+        ramais_anteriores.add(registro["dir nb"])
+
+    for ramal in ramais_anteriores - dir_nbs:  # Ramais que voltaram online
+        if ramal not in historico:
+            historico[ramal] = []
+        historico[ramal].insert(0, agora)
+        historico[ramal] = historico[ramal][:10]  # Mantém apenas os 10 últimos registros
+
+    # Salva o histórico atualizado
+    HISTORICO_FILE.write_text(
+        json.dumps(historico, ensure_ascii=False, indent=2),
+        encoding="utf-8"
+    )
 
     # -----------------------------------------------------------------------
     writer.write("exit\n")

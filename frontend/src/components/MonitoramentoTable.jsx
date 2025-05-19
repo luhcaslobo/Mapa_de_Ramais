@@ -1,5 +1,3 @@
-
-
 import { useState, useEffect } from "react"
 import subscribers from "/src/assets/pabx/subscribers.json"
 import useMobile from "../hooks/useMobile"
@@ -19,6 +17,9 @@ export default function MonitoramentoTable({ data, ramais, onSelect }) {
   const [annotations, setAnnotations] = useState({})
   const [menu, setMenu] = useState({ visible: false, x: 0, y: 0, dn: null, editing: false })
   const [tempText, setTempText] = useState("")
+  const [historico, setHistorico] = useState([])
+  const [showHistorico, setShowHistorico] = useState(false)
+  const [selectedDn, setSelectedDn] = useState(null)
   const isMobile = useMobile()
 
   useEffect(() => {
@@ -38,6 +39,31 @@ export default function MonitoramentoTable({ data, ramais, onSelect }) {
     document.addEventListener("click", handleClickOutside)
     return () => document.removeEventListener("click", handleClickOutside)
   }, [menu.visible])
+
+  const fetchHistorico = async (dn) => {
+    try {
+      console.log("Buscando histórico para ramal:", dn)
+      const res = await fetch(`/api/historico/${dn}`)
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`)
+      }
+
+      const data = await res.json()
+      console.log("Dados recebidos:", data)
+      
+      if (!Array.isArray(data?.historico)) {
+        throw new Error("Formato de dados inválido")
+      }
+
+      setHistorico(data.historico)
+      setShowHistorico(true)
+      setSelectedDn(dn)
+    } catch (err) {
+      console.error("Erro ao carregar histórico:", err)
+      alert("Erro ao carregar histórico. Por favor, tente novamente.")
+    }
+  }
 
   if (!data?.length) return null
 
@@ -126,6 +152,30 @@ export default function MonitoramentoTable({ data, ramais, onSelect }) {
         })}
       </div>
 
+      {showHistorico && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-4 rounded-lg w-96 max-w-[90%]">
+            <h2 className="text-lg font-bold mb-4">Histórico do Ramal {selectedDn}</h2>
+            <div className="max-h-64 overflow-auto">
+              {historico.map((data, index) => (
+                <div key={index} className="mb-2 p-2 bg-gray-100 rounded">
+                  {formatHorario(data)}
+                </div>
+              ))}
+              {historico.length === 0 && (
+                <p className="text-gray-500">Nenhum registro encontrado</p>
+              )}
+            </div>
+            <button
+              onClick={() => setShowHistorico(false)}
+              className="mt-4 px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-600"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
+
       {menu.visible && (
         <div
           className="fixed bg-white border shadow p-2 z-50 rounded"
@@ -166,15 +216,27 @@ export default function MonitoramentoTable({ data, ramais, onSelect }) {
               </div>
             </>
           ) : (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                setMenu((prev) => ({ ...prev, editing: true }))
-              }}
-              className="px-3 py-1 bg-blue-700 text-white rounded hover:bg-blue-600"
-            >
-              Editar Anotação
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setMenu((prev) => ({ ...prev, editing: true }))
+                }}
+                className="px-3 py-1 bg-blue-700 text-white rounded hover:bg-blue-600"
+              >
+                Editar Anotação
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  fetchHistorico(menu.dn)
+                  setMenu((prev) => ({ ...prev, visible: false }))
+                }}
+                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                Ver Histórico
+              </button>
+            </div>
           )}
         </div>
       )}

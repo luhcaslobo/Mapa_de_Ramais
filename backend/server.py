@@ -1,5 +1,5 @@
 # server.py  — versão enxuta servindo JSON pré-gerado
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.staticfiles import StaticFiles
 from apscheduler.schedulers.background import BackgroundScheduler
 from pydantic import BaseModel
@@ -70,6 +70,33 @@ def add_annotation(item: Annotation):
     ANNOTATIONS_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2),
                                 encoding="utf-8")
     return {"ok": True}
+
+# Novo endpoint para histórico de ramais
+@app.get("/api/historico/{ramal}")
+def get_historico(ramal: str):
+    try:
+        # Use absolute path resolution
+        historico_path = Path(__file__).parent / "static" / "pabx" / "historico_ramais.json"
+        if not historico_path.exists():
+            print(f"Arquivo não encontrado: {historico_path}")
+            return Response(
+                content=json.dumps({"historico": []}),
+                media_type="application/json"
+            )
+            
+        historico = json.loads(historico_path.read_text(encoding="utf-8"))
+        dados = historico.get(ramal, [])
+        print(f"Histórico para ramal {ramal}:", dados)
+        return Response(
+            content=json.dumps({"historico": dados}),
+            media_type="application/json"
+        )
+    except Exception as e:
+        print(f"Erro ao buscar histórico: {str(e)}")
+        return Response(
+            content=json.dumps({"historico": [], "error": str(e)}),
+            media_type="application/json"
+        )
 
 # ---------------------------------------------------------------------- #
 #  frontend build                                                        #
