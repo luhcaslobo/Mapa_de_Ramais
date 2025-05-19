@@ -52,30 +52,34 @@ async def telnet_cycle():
     except (FileNotFoundError, json.JSONDecodeError):
         registros = []
 
-    # retém somente dir nb ainda presentes
-    registros = [item for item in registros if item["dir nb"] in dir_nbs]
+    # Obtém o conjunto de ramais que estavam offline anteriormente
+    ramais_anteriores = {item["dir nb"] for item in registros}
+    
+    # retém somente dir nb ainda presentes e atualiza horário apenas para novos
+    registros = [
+        {"dir nb": item["dir nb"], "horário": item["horário"]} 
+        for item in registros if item["dir nb"] in dir_nbs
+    ]
 
-    conhecidos = {item["dir nb"] for item in registros}
-    for dn in dir_nbs - conhecidos:
+    # Adiciona apenas ramais novos que não estavam na lista anterior
+    for dn in dir_nbs - {item["dir nb"] for item in registros}:
         registros.append({"dir nb": dn, "horário": agora})
 
     JSON_FILE.write_text(json.dumps(registros, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    # Atualiza histórico de ramais que ficaram offline
+    # Atualiza histórico apenas para ramais que acabaram de ficar offline
     try:
         historico = json.loads(HISTORICO_FILE.read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
         historico = {}
 
-    # Para cada ramal na lista atual de offline
-    for registro in registros:
-        ramal = registro["dir nb"]
+    # Atualiza apenas ramais que não estavam offline e agora estão
+    novos_offline = dir_nbs - ramais_anteriores
+    for ramal in novos_offline:
         if ramal not in historico:
             historico[ramal] = []
-        # Adiciona novo registro apenas se for diferente do último
-        if not historico[ramal] or historico[ramal][0] != agora:
-            historico[ramal].insert(0, agora)
-            historico[ramal] = historico[ramal][:10]  # Mantém apenas os 10 últimos registros
+        historico[ramal].insert(0, agora)
+        historico[ramal] = historico[ramal][:10]  # Mantém apenas os 10 últimos registros
 
     # Salva o histórico atualizado
     HISTORICO_FILE.write_text(
