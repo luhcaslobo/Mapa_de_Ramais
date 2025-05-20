@@ -35,3 +35,6 @@ Thumbs.db
 # Arquivos de lock não ignorados (mantêm versões travadas)
 # package-lock.json  ← deixar versionado
 # requirements.txt  ← deixar versionado
+
+# Arquivos de monitoramento da aplicação
+/backend/static/pabx/
