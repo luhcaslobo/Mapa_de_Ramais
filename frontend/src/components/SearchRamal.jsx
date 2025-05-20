@@ -25,7 +25,7 @@ export default function SearchRamal({ data, onSelect, inactive }) {
 
       {open && list.length > 0 && (
         <ul
-          className={`absolute z-20 w-full max-h-48 overflow-auto rounded border bg-white shadow text-sm ${isMobile ? "max-w-[90%]" : ""}`}
+          className={` mt-10 absolute z-20 w-full max-h-48 overflow-auto rounded border bg-white shadow text-sm ${isMobile ? "max-w-[90%]" : ""}`}
         >
           {list.map((r) => (
             <li
@@ -42,7 +42,7 @@ export default function SearchRamal({ data, onSelect, inactive }) {
                 style={{ background: inactive?.has(r.ramal) ? "#dc2626" : "#16a34a" }}
               />
               <span className="truncate">
-                {r.ramal} — {r.andar}
+                {r.ramal} — {r.andar} - {r.nome}
               </span>
             </li>
           ))}
