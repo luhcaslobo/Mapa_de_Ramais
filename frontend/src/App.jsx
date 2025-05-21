@@ -192,45 +192,57 @@ export default function App() {
                   return (
                     <div 
                       key={andar} 
-                      className="bg-white p-4 rounded-lg shadow cursor-pointer hover:bg-gray-200 transition-colors"
+                      className="bg-white p-5 rounded-xl shadow-md hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300"
                     >
                       <h3 
-                        className="text-lg font-semibold text-blue-900 mb-2"
+                        className="text-lg font-semibold text-blue-900 mb-3 pb-2 border-b border-gray-100 hover:text-blue-700 transition-colors cursor-pointer flex items-center gap-2"
                         onClick={() => setSelPdf(pdfUrl)}
                       >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
                         {andar === 'T' ? 'Térreo' : andar.endsWith('S') ? `${andar.replace('S', '')}º Subsolo` : `${andar}º Andar`}
                       </h3>
-                      <div className="space-y-1">
-                        <p 
-                          className="text-green-600 cursor-pointer hover:underline"
+                      <div className="space-y-2">
+                        <button 
+                          className="w-full p-2 rounded-lg bg-green-50 hover:bg-green-100 flex items-center justify-between group transition-all"
                           onClick={() => {
                             setPendingShowAll(true);
                             setSelPdf(pdfUrl);
                             setFilterStatus("ativos");
                           }}
                         >
-                          Ativos: {stats.ativos}
-                        </p>
-                        <p 
-                          className="text-red-600 cursor-pointer hover:underline"
+                          <span className="text-green-700 font-medium">Ativos</span>
+                          <span className="bg-green-200 text-green-800 px-2 py-1 rounded-full group-hover:scale-110 transition-transform">
+                            {stats.ativos}
+                          </span>
+                        </button>
+                        <button 
+                          className="w-full p-2 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-between group transition-all"
                           onClick={() => {
                             setPendingShowAll(true);
                             setSelPdf(pdfUrl);
                             setFilterStatus("inativos");
                           }}
                         >
-                          Inativos: {stats.inativos}
-                        </p>
-                        <p 
-                          className="text-gray-600 cursor-pointer"
+                          <span className="text-red-700 font-medium">Inativos</span>
+                          <span className="bg-red-200 text-red-800 px-2 py-1 rounded-full group-hover:scale-110 transition-transform">
+                            {stats.inativos}
+                          </span>
+                        </button>
+                        <button 
+                          className="w-full p-2 rounded-lg bg-gray-50 hover:bg-gray-100 flex items-center justify-between group transition-all"
                           onClick={() => {
                             setPendingShowAll(true);
                             setSelPdf(pdfUrl);
                             setFilterStatus("todos");
                           }}
                         >
-                          Total: {stats.total}
-                        </p>
+                          <span className="text-gray-700 font-medium">Total</span>
+                          <span className="bg-gray-200 text-gray-800 px-2 py-1 rounded-full group-hover:scale-110 transition-transform">
+                            {stats.total}
+                          </span>
+                        </button>
                       </div>
                     </div>
                   );
