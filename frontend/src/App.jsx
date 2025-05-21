@@ -29,6 +29,7 @@ export default function App() {
   const [showAll, setShowAll] = useState(false)
   const [filterStatus, setFilterStatus] = useState("todos")
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [pendingShowAll, setPendingShowAll] = useState(false)
 
   const isMobile = useMobile()
   const summary = useRamaisSummary()
@@ -85,10 +86,14 @@ export default function App() {
         }),
       )
       setPages(rendered)
+      
+      // Only update showAll if we have a pending state
+      if (pendingShowAll) {
+        setShowAll(true)
+        setPendingShowAll(false)
+      }
     })()
-  }, [selPdf, isMobile])
-
-  useEffect(() => setShowAll(false), [selPdf])
+  }, [selPdf, isMobile, pendingShowAll])
 
   // Close sidebar when a ramal is selected on mobile
   const handleRamalSelect = (data) => {
@@ -180,19 +185,56 @@ export default function App() {
             <h2 className="text-xl font-bold text-gray-800 mb-4">Dashboard de Ramais</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {['4S', '3S', '2S', '1S', 'T', ...Array.from({length: 23}, (_, i) => (i + 1).toString())]
-                .map(andar => summary[andar] || { ativos: 0, inativos: 0, total: 0 })
-                .map((stats, idx) => (
-                  <div key={idx} className="bg-white p-4 rounded-lg shadow">
-                    <h3 className="text-lg font-semibold text-blue-900 mb-2">
-                      {idx < 5 ? ['4S', '3S', '2S', '1S', 'T'][idx] : (idx - 4)}º Andar
-                    </h3>
-                    <div className="space-y-1">
-                      <p className="text-green-600">Ativos: {stats.ativos}</p>
-                      <p className="text-red-600">Inativos: {stats.inativos}</p>
-                      <p className="text-gray-600">Total: {stats.total}</p>
+                .map(andar => {
+                  const stats = summary[andar] || { ativos: 0, inativos: 0, total: 0 };
+                  const pdfUrl = PDFS.find(p => p.nome === andar)?.url || '';
+                  
+                  return (
+                    <div 
+                      key={andar} 
+                      className="bg-white p-4 rounded-lg shadow cursor-pointer hover:bg-gray-200 transition-colors"
+                    >
+                      <h3 
+                        className="text-lg font-semibold text-blue-900 mb-2"
+                        onClick={() => setSelPdf(pdfUrl)}
+                      >
+                        {andar === 'T' ? 'Térreo' : andar.endsWith('S') ? `${andar.replace('S', '')}º Subsolo` : `${andar}º Andar`}
+                      </h3>
+                      <div className="space-y-1">
+                        <p 
+                          className="text-green-600 cursor-pointer hover:underline"
+                          onClick={() => {
+                            setPendingShowAll(true);
+                            setSelPdf(pdfUrl);
+                            setFilterStatus("ativos");
+                          }}
+                        >
+                          Ativos: {stats.ativos}
+                        </p>
+                        <p 
+                          className="text-red-600 cursor-pointer hover:underline"
+                          onClick={() => {
+                            setPendingShowAll(true);
+                            setSelPdf(pdfUrl);
+                            setFilterStatus("inativos");
+                          }}
+                        >
+                          Inativos: {stats.inativos}
+                        </p>
+                        <p 
+                          className="text-gray-600 cursor-pointer"
+                          onClick={() => {
+                            setPendingShowAll(true);
+                            setSelPdf(pdfUrl);
+                            setFilterStatus("todos");
+                          }}
+                        >
+                          Total: {stats.total}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-              ))}
+                  );
+                })}
             </div>
           </div>
         )}
