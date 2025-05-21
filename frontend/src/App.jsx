@@ -8,6 +8,7 @@ import useCoords from "./hooks/useCoords"
 import useRamais from "./hooks/useRamais"
 import useMonitoramento from "./hooks/useMonitoramento"
 import useMobile from "./hooks/useMobile"
+import useRamaisSummary from "./hooks/useRamaisSummary"
 
 import SelectPdf from "./components/SelectPdf"
 import SearchRamal from "./components/SearchRamal"
@@ -30,6 +31,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   const isMobile = useMobile()
+  const summary = useRamaisSummary()
 
   // Auto-close sidebar on mobile
   useEffect(() => {
@@ -174,10 +176,28 @@ export default function App() {
             filterStatus={filterStatus}
           />
         ) : (
-          <div className="text-gray-600 text-center mt-12">Selecione um mapa para visualizar</div>
+          <div className="p-4">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Dashboard de Ramais</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {['4S', '3S', '2S', '1S', 'T', ...Array.from({length: 23}, (_, i) => (i + 1).toString())]
+                .map(andar => summary[andar] || { ativos: 0, inativos: 0, total: 0 })
+                .map((stats, idx) => (
+                  <div key={idx} className="bg-white p-4 rounded-lg shadow">
+                    <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                      {idx < 5 ? ['4S', '3S', '2S', '1S', 'T'][idx] : (idx - 4)}º Andar
+                    </h3>
+                    <div className="space-y-1">
+                      <p className="text-green-600">Ativos: {stats.ativos}</p>
+                      <p className="text-red-600">Inativos: {stats.inativos}</p>
+                      <p className="text-gray-600">Total: {stats.total}</p>
+                    </div>
+                  </div>
+              ))}
+            </div>
+          </div>
         )}
       </section>
-
+      
       {/* Logo */}
       <img src="/VSlogo_small.png" alt="VS Logo" className="absolute bottom-4 right-4 w-8 md:w-12 h-auto opacity-100" />
     </main>
