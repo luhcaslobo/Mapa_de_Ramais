@@ -9,6 +9,7 @@ export default function useRamais() {
         .map(s => ({
           ramal:   String(s.Directory_Number).trim(),
           andar:   String(s.Annu_First_Name).trim(),   // nome do PDF
+          nome:  String(s.Annu_Name).trim(),    // nome do ramal
           comment: (s.UTF8_Comment3 || '').trim(),     // pop‑over alvo
         }))
         .filter(r => r.ramal && r.andar && r.comment),

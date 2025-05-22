@@ -7,7 +7,12 @@ export default function SearchRamal({ data, onSelect, inactive }) {
   const [open, setOpen] = useState(false)
   const isMobile = useMobile()
 
-  const list = q ? data.filter((r) => r.ramal.includes(q)).slice(0, 20) : []
+  const list = q 
+    ? data.filter((r) => 
+        r.ramal.toLowerCase().includes(q.toLowerCase()) || 
+        r.nome?.toLowerCase().includes(q.toLowerCase())
+      ).slice(0, 20) 
+    : []
 
   return (
     <div className="relative flex justify-center">
@@ -42,7 +47,7 @@ export default function SearchRamal({ data, onSelect, inactive }) {
                 style={{ background: inactive?.has(r.ramal) ? "#dc2626" : "#16a34a" }}
               />
               <span className="truncate">
-                {r.ramal} — {r.andar} - {r.nome}
+                {r.ramal} - {r.andar} - {r.nome}
               </span>
             </li>
           ))}
